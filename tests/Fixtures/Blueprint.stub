@@ -1,0 +1,12 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Illuminate\Database\Schema;
+
+/**
+ * @method void renamePermissionGroup(string $from, string $to)
+ * @method void renamePermission(string $group, string $from, string $to)
+ * @method void renameRole(string $from, string $to)
+ */
+class Blueprint {}

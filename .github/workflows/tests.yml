@@ -72,3 +72,81 @@ jobs:
           npm run build
           npm run check:dist
           git diff --exit-code -- dist
+
+  authorization-integration:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: pgsql
+            cache: redis
+          - database: mariadb
+            cache: memcached
+
+    name: Authorization with ${{ matrix.database }} and ${{ matrix.cache }}
+
+    services:
+      postgres:
+        image: ${{ matrix.database == 'pgsql' && 'postgres:17' || '' }}
+        env:
+          POSTGRES_DB: permit_testing
+          POSTGRES_USER: permit_test
+          POSTGRES_PASSWORD: permit_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U permit_test -d permit_testing"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      mariadb:
+        image: ${{ matrix.database == 'mariadb' && 'mariadb:11.4' || '' }}
+        env:
+          MARIADB_DATABASE: permit_testing
+          MARIADB_USER: permit_test
+          MARIADB_PASSWORD: permit_test
+          MARIADB_RANDOM_ROOT_PASSWORD: '1'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: ${{ matrix.cache == 'redis' && 'redis:7-alpine' || '' }}
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      memcached:
+        image: ${{ matrix.cache == 'memcached' && 'memcached:1.6-alpine' || '' }}
+        ports:
+          - 11211:11211
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.5'
+          extensions: intl, pdo_sqlite, pdo_mysql, pdo_pgsql, redis, memcached
+          ini-values: error_reporting=E_ALL
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Test authorization against shared services
+        env:
+          PERMIT_INTEGRATION_DB: ${{ matrix.database }}
+          PERMIT_INTEGRATION_CACHE: ${{ matrix.cache }}
+        run: php vendor/bin/pest tests/Feature/AuthorizationIntegrationTest.php

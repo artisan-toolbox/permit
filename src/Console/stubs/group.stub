@@ -1,0 +1,12 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use ArtisanToolbox\Permit\Attributes\CRUD;
+use ArtisanToolbox\Permit\Attributes\Group;
+
+#[Group({{ id }}, {{ name }})]
+#[CRUD]
+interface {{ class }} {}

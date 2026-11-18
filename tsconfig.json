@@ -9,5 +9,10 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["resources/js/**/*.ts", "tests/Frontend/**/*.ts", "vite.config.ts"]
+  "include": [
+    "resources/js/**/*.ts",
+    "tests/Frontend/**/*.ts",
+    "tests/Frontend/**/*.vue",
+    "vite.config.ts"
+  ]
 }

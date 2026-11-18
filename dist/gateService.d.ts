@@ -1,0 +1,10 @@
+import { InjectionKey } from 'vue';
+export declare const gateConditions: readonly ["allows", "allow", "check", "denies", "deny", "any", "none"];
+export type AbilityQuery = string | readonly string[];
+type GateCondition = (typeof gateConditions)[number];
+export type GateService = Readonly<Record<GateCondition, (abilities: AbilityQuery) => boolean>>;
+export declare const gateKey: InjectionKey<GateService>;
+export declare function isAbilityQuery(value: unknown): value is AbilityQuery;
+export declare function createGate(readPage: () => unknown): GateService;
+export declare function useGate(): GateService;
+export {};

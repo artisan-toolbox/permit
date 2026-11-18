@@ -3,7 +3,7 @@
   "name": "@artisan-toolbox/permit",
   "version": "1.0.0-alpha.1",
   "private": true,
-  "description": "Preview frontend entry point for Artisan Toolbox Permit.",
+  "description": "Vue authorization helpers for Artisan Toolbox Permit.",
   "homepage": "https://github.com/artisan-toolbox/permit",
   "license": "MIT",
   "repository": {
@@ -36,11 +36,18 @@
     "release:build": "npm run check && npm run typecheck && npm run test && npm run build && npm run check:dist"
   },
   "devDependencies": {
+    "@inertiajs/vue3": "3.11.0",
     "@types/node": "^24.13.3",
+    "happy-dom": "21.0.4",
     "typescript": "^5.8.3",
     "vite-plugin-dts": "^5.1.2",
     "vite-plus": "1.6.0",
+    "vue": "3.5.45",
     "vue-tsc": "^3.1.5"
+  },
+  "peerDependencies": {
+    "@inertiajs/vue3": "^3.0.0",
+    "vue": "^3.5.0"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0"

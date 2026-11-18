@@ -4,6 +4,7 @@ import dts from 'vite-plugin-dts';
 
 export default defineConfig({
     build: {
+        rollupOptions: { external: ['vue'] },
         lib: {
             entry: resolve(import.meta.dirname, 'resources/js/index.ts'),
             formats: ['es', 'cjs'],
@@ -39,5 +40,6 @@ export default defineConfig({
     },
     test: {
         include: ['tests/Frontend/**/*.test.ts'],
+        environmentOptions: { happyDOM: { url: 'http://localhost/' } },
     },
 });

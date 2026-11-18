@@ -28,7 +28,7 @@ class Permit implements BeforeVersioning, Versionable, WithReadmeHead
         return (new Head)
             ->withLogo(src: 'logo/permit-icon.svg', alt: '', width: 88)
             ->withTitle('Permit')
-            ->withDescription('Laravel authorization package in preview. Roles and permissions are not implemented yet.')
+            ->withDescription('Laravel authorization preview for declaring Gates and managing per-user permissions and roles.')
             ->addBadge(Badge::make(
                 link: 'https://atb.dev.br/packages/permit/',
                 imgSrc: 'https://img.shields.io/badge/Status-Unpublished%20preview-orange?style=flat-square',
