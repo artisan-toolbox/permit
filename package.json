@@ -1,0 +1,55 @@
+{
+  "$schema": "https://www.schemastore.org/package.json",
+  "name": "@artisan-toolbox/permit",
+  "version": "1.0.0-alpha.1",
+  "private": true,
+  "description": "Preview frontend entry point for Artisan Toolbox Permit.",
+  "homepage": "https://github.com/artisan-toolbox/permit",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artisan-toolbox/permit"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "standards:check": "node .ai/sync.mjs --check",
+    "build": "vp build",
+    "dev": "vp dev",
+    "check": "vp check",
+    "check:fix": "vp check --fix",
+    "test": "vp test",
+    "typecheck": "vue-tsc --noEmit",
+    "check:dist": "node scripts/check-distribution.mjs",
+    "release:build": "npm run check && npm run typecheck && npm run test && npm run build && npm run check:dist"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.8.3",
+    "vite-plugin-dts": "^5.1.2",
+    "vite-plus": "1.6.0",
+    "vue-tsc": "^3.1.5"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0"
+  },
+  "engines": {
+    "node": "^20.19.0 || ^22.18.0 || >=24.11.0"
+  },
+  "packageManager": "npm@11.20.0",
+  "allowScripts": {
+    "fsevents": false
+  }
+}

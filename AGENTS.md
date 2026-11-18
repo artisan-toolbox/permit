@@ -13,6 +13,8 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 ## Quick Commands
 
 - Full validation: `composer test`
+- Configured PHP and frontend checks: `php vendor/bin/maintainer quality:check --no-interaction`
+- Frontend validation and build: `npm run release:build`
 - Formatting check: `composer lint:check`
 - Static analysis: `composer analyse`
 - Pest tests: `composer test:unit`

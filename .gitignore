@@ -1,4 +1,7 @@
 /vendor
+/node_modules
+/config/maintainer_secrets.php
+/phpstan.neon
 /build
 /.phpunit.cache
 /.phpunit.result.cache

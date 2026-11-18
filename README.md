@@ -1,67 +1,38 @@
-<div align="center">
+<!-- MAINTAINER:README_HEAD:START -->
+<div id="maintainer-title" align="center">
+    <img src="logo/permit-icon.svg" alt="" width="88">
     <h1>Permit</h1>
 </div>
 
-<p align="center">
-    <a href="https://packagist.org/packages/artisan-toolbox/permit"><img src="https://img.shields.io/packagist/v/artisan-toolbox/permit.svg?style=flat-square" alt="Packagist"></a>
-    <a href="https://packagist.org/packages/artisan-toolbox/permit"><img src="https://img.shields.io/packagist/php-v/artisan-toolbox/permit.svg?style=flat-square" alt="PHP from Packagist"></a>
-    <a href="https://packagist.org/packages/artisan-toolbox/permit"><img src="https://badge.laravel.cloud/badge/artisan-toolbox/permit?style=flat" alt="Laravel versions"></a>
-    <a href="https://github.com/artisan-toolbox/permit/actions"><img alt="GitHub Workflow Status (main)" src="https://img.shields.io/github/actions/workflow/status/artisan-toolbox/permit/tests.yml?branch=main&label=Tests&style=flat-square"></a>
-    <a href="https://packagist.org/packages/artisan-toolbox/permit"><img src="https://img.shields.io/packagist/dt/artisan-toolbox/permit.svg?style=flat-square" alt="Total Downloads"></a>
+<p id="maintainer-badges" align="center">
+<a href="https://atb.dev.br/packages/permit/"><img src="https://img.shields.io/badge/Status-Unpublished%20preview-orange?style=flat-square" alt="Status"></a>
+<a href="https://atb.dev.br/packages/permit/#requirements"><img src="https://img.shields.io/badge/PHP-%5E8.5-777BB4?style=flat-square" alt="PHP"></a>
+<a href="https://atb.dev.br/packages/permit/#requirements"><img src="https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square" alt="Laravel"></a>
+<a href="https://github.com/artisan-toolbox/permit/actions/workflows/tests.yml?query=branch%3A1.x"><img src="https://img.shields.io/github/actions/workflow/status/artisan-toolbox/permit/tests.yml?branch=1.x&amp;label=Tests&amp;style=flat-square" alt="Tests"></a>
+<a href="https://atb.dev.br/packages/permit/"><img src="https://img.shields.io/badge/Docs-Read-blue?style=flat-square" alt="Docs"></a>
 </p>
 
-Permit is a Laravel authorization package that builds on Gates and Policies to provide a simple, expressive API for managing user roles and permissions.
+<p id="maintainer-description" align="center">
+    Laravel authorization package in preview. Roles and permissions are not implemented yet.
+</p>
+<!-- MAINTAINER:README_HEAD:END -->
 
-## Installation
+Permit is an unpublished preview for PHP 8.5 and Laravel 13. Version `1.0.0-alpha.1` provides package metadata and Laravel service discovery. Authorization APIs are not available yet.
 
-You can install the package via Composer:
-
-```bash
-composer require artisan-toolbox/permit
-```
-
-You may publish all of the package's resources at once:
+Install the development branch from a configured local checkout or repository. This command does not identify a stable release.
 
 ```bash
-php artisan vendor:publish --tag="permit"
+composer require artisan-toolbox/permit:1.x-dev
 ```
 
-Or, you may publish each resource individually:
+Read the installed preview version after Laravel discovers the service provider.
 
-### Publishing the Configuration File
+```php
+use ArtisanToolbox\Permit\Permit;
 
-```bash
-php artisan vendor:publish --tag="permit-config"
+$permit = app(Permit::class);
+
+echo $permit::VERSION; // 1.0.0-alpha.1
 ```
 
-### Publishing and Running the Migrations
-
-```bash
-php artisan vendor:publish --tag="permit-migrations"
-php artisan migrate
-```
-
-## Usage
-
-<!-- Add a basic usage example here. -->
-
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Thank you for considering contributing to Permit! Please review our [contributing guide](.github/CONTRIBUTING.md) to get started.
-
-## Security Vulnerabilities
-
-Please review [our security policy](.github/SECURITY.md) on how to report security vulnerabilities.
-
-## Credits
-
-- [Allan Mariucci Carvalho](https://github.com/artisan-toolbox)
-- [All Contributors](../../contributors)
-
-## License
-
-Permit is open-sourced software licensed under the [MIT license](LICENSE.md).
+See the [documentation](https://atb.dev.br/packages/permit/), [installation guide](https://atb.dev.br/packages/permit/installation/), [contribution guide](.github/CONTRIBUTING.md), [security policy](.github/SECURITY.md), [changelog](CHANGELOG.md), and [MIT license](LICENSE.md).

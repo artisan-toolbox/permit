@@ -1,0 +1,1 @@
+Object.defineProperty(exports,Symbol.toStringTag,{value:`Module`});var e=`1.0.0-alpha.1`;exports.PERMIT_VERSION=e;

@@ -24,6 +24,8 @@ Clone your fork, then install the dev dependencies:
 
 ```bash
 composer install
+npm install
+npm run build
 ```
 
 ## Lint
@@ -40,4 +42,6 @@ Run all tests:
 
 ```bash
 composer test
+php vendor/bin/maintainer quality:check --no-interaction
+npm run release:build
 ```
