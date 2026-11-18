@@ -34,7 +34,10 @@ it('keeps committed Gate decisions authoritative across database reads and cache
     $store = match ($cacheDriver) {
         'array' => ['driver' => 'array'],
         'redis' => ['driver' => 'redis', 'connection' => 'permit_integration'],
-        'memcached' => ['driver' => 'memcached', 'servers' => [['host' => '127.0.0.1', 'port' => 11211]]],
+        'memcached' => [
+            'driver' => 'memcached',
+            'servers' => [['host' => '127.0.0.1', 'port' => 11211, 'weight' => 100]],
+        ],
         default => throw new InvalidArgumentException("Unknown Permit test cache [$cacheDriver]."),
     };
     config([
