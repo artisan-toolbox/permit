@@ -27,7 +27,7 @@ final class InspectAssignments extends Command
 
     public function handle(Catalog $catalog, Translator $translator, Users $users, AssignmentStore $store): int
     {
-        $id = $this->argument('user');
+        $id = $this->input->getArgument('user');
         $defaults = $this->option('defaults');
 
         if ($defaults && $id !== null) {

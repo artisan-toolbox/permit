@@ -39,6 +39,9 @@ final class AuthorizationToolsTest extends AuthorizationTestCase
         self::assertMatchesRegularExpression('/Print user data\s*\.+\s*Denied/', $details);
         self::assertMatchesRegularExpression('/Auditor\s*\.+\s*Default · Allowed/', $details);
 
+        self::assertSame(0, Artisan::call('permit:inspect '.$user->getKey().' --no-ansi'));
+        self::assertSame($details, Artisan::output());
+
         DB::enableQueryLog();
         foreach ([['--defaults' => true], ['--no-interaction' => true]] as $arguments) {
             self::assertSame(0, Artisan::call('permit:inspect', $arguments));
@@ -51,6 +54,7 @@ final class AuthorizationToolsTest extends AuthorizationTestCase
 
         self::assertSame(1, Artisan::call('permit:inspect', ['user' => '999']));
         self::assertSame(1, Artisan::call('permit:inspect', ['user' => $user->getKey(), '--defaults' => true]));
+        self::assertStringContainsString('Choose a user or the --defaults option.', Artisan::output());
     }
 
     public function test_editor_localizes_crud_labels_and_preserves_locked_order(): void
