@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.0.0-beta.2] - 2026-11-19
+
+### Features
+
+- **Add Font Awesome icons support to permission editor catalog** (`ed90b31`)
+  Adds Font Awesome icon support to the permission editor’s catalog. This includes wiring icon data into the management UI so permissions/groups/abilities can optionally render icons in the catalog/editor experience.
+
+User impact: maintainers and end-users gain the ability to display icons within the permission editor catalog, improving clarity and UX.
+
+Compatibility/migration: icon rendering is introduced as optional behavior; existing configurations and attribute usage should continue to work. To enable icons, configure the appropriate icon settings (e.g., via the added config block) and provide `icon` values where supported.
+
+### Fixes
+
+- **Persist catalog icons with translated caching** (`eb3bc91`)
+  Ensures that catalog icon data is retained correctly when catalogs are loaded from translated caches. This fixes an issue where icon-related information could be lost or mismatched after caching/translation, so the presented permission/group catalog remains consistent across locale-aware loading.
+
+User impact: users using the permission catalog with optional icons should no longer see icons disappear or be incorrect when cached translated catalogs are reused.
+
+Compatibility/migration: this is a bug fix; no public API changes are required. If you rely on cached catalogs, you should see corrected icon persistence automatically after updating.
+
+### Documentation
+
+- **Clarify badge and UI reuse standards** (`47e9a90`)
+  Updates documentation guidelines regarding badge usage and UI reuse standards. This clarifies how shared documentation/UI patterns should be applied across the project, including standards that affect how README badge rows and related UI elements should be structured.
+
+User impact: documentation-only change that helps maintainers produce consistent package READMEs and reduces release-process inconsistencies.
+
+Compatibility/migration: no runtime or API changes.
+
+### Maintenance
+
+- **Update README badges for beta release** (`9ba1f4e`)
+  Refreshes documentation badges and README badge metadata for the beta release cycle. Ensures the project/package README status indicators and related badge rows reflect the correct beta/pre-release context for `1.0.0-beta.2`.
+
+User impact: documentation-only change; helps consumers and maintainers identify the correct release state and installation guidance.
+
+Compatibility/migration: no runtime/package API changes.
+
 ## Unreleased
 
 - Install the published Permit beta from Packagist in the README and Boost skill.
