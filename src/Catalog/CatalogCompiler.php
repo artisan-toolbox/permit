@@ -27,7 +27,7 @@ use Throwable;
  */
 final readonly class CatalogCompiler
 {
-    private const int FORMAT = 1;
+    private const int FORMAT = 2;
 
     private const array ATTRIBUTES = [Group::class, Permission::class, Role::class, Roles::class, CRUD::class, LockedOrder::class];
 
@@ -157,6 +157,7 @@ final readonly class CatalogCompiler
         }
 
         $id = $declaration->id ?? 'role';
+        $icon = $declaration?->icon;
         $keyPrefix = $roleSection ? 'role' : $id;
         $abilities = $crud === [] ? [] : $this->crud($keyPrefix, $source->getName(), $this->instantiate($crud[0]));
         usort($methods, fn (ReflectionMethod $first, ReflectionMethod $second): int => $first->getStartLine() <=> $second->getStartLine());
@@ -173,6 +174,7 @@ final readonly class CatalogCompiler
             'order' => $locked === [] ? 'alphabetical' : 'locked',
             'source' => $source->getName(),
             'abilities' => $abilities,
+            ...($icon === null ? [] : ['icon' => $icon]),
         ];
     }
 
@@ -202,6 +204,7 @@ final readonly class CatalogCompiler
         }
 
         $definition = $this->instantiate($attributes[0]);
+        $icon = $definition instanceof Permission ? $definition->icon : null;
 
         return [
             'key' => $prefix.'::'.$method->getName(),
@@ -209,6 +212,7 @@ final readonly class CatalogCompiler
             'description' => $definition->description,
             'default' => $definition->default,
             'source' => $method->getDeclaringClass()->getName().'::'.$method->getName(),
+            ...($icon === null ? [] : ['icon' => $icon]),
         ];
     }
 
@@ -241,6 +245,7 @@ final readonly class CatalogCompiler
                     'description' => "permit::catalog.crud.{$action}.description",
                     'default' => false,
                     'source' => "{$source} #[CRUD({$action})]",
+                    'iconConfig' => "crud.{$action}",
                 ];
             }
         }
@@ -259,6 +264,7 @@ final readonly class CatalogCompiler
                 'description' => "permit::catalog.management.{$action}.description",
                 'default' => false,
                 'source' => 'Permit UserPermissions',
+                'iconConfig' => "user_permissions.{$action}",
             ];
         }
 
@@ -270,6 +276,7 @@ final readonly class CatalogCompiler
             'order' => 'alphabetical',
             'source' => 'Permit UserPermissions',
             'abilities' => $abilities,
+            'iconConfig' => 'user_permissions.group',
         ];
     }
 
@@ -287,12 +294,16 @@ final readonly class CatalogCompiler
                 || ! is_string($section['id'] ?? null) || ! is_string($section['name'] ?? null)
                 || ! is_string($section['source'] ?? null) || ! array_key_exists('description', $section)
                 || ($section['description'] !== null && ! is_string($section['description']))
+                || (isset($section['icon']) && ! is_string($section['icon']))
+                || (isset($section['iconConfig']) && ! is_string($section['iconConfig']))
                 || ! is_array($section['abilities'] ?? null) || ! array_is_list($section['abilities'])) {
                 return null;
             }
             foreach ($section['abilities'] as $ability) {
                 if (! is_array($ability) || ! is_string($ability['key'] ?? null) || ! is_string($ability['name'] ?? null)
                     || ! is_string($ability['source'] ?? null) || ! is_bool($ability['default'] ?? null)
+                    || (isset($ability['icon']) && ! is_string($ability['icon']))
+                    || (isset($ability['iconConfig']) && ! is_string($ability['iconConfig']))
                     || ! array_key_exists('description', $ability) || ($ability['description'] !== null && ! is_string($ability['description']))) {
                     return null;
                 }

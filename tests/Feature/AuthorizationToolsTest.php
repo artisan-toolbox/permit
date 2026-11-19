@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtisanToolbox\Permit\Tests\Feature;
 
+use ArtisanToolbox\Permit\Catalog\Catalog;
 use ArtisanToolbox\Permit\Catalog\CatalogCompiler;
 use ArtisanToolbox\Permit\Facades\Permit;
 use ArtisanToolbox\Permit\Storage\AssignmentConflict;
@@ -97,13 +98,23 @@ final class AuthorizationToolsTest extends AuthorizationTestCase
 
     public function test_generator_and_compiler_discover_new_interfaces_from_source(): void
     {
-        $this->withDeclarationFiles(function (string $path, string $namespace): void {
+        $admin = $this->user();
+        Permit::add($admin, Catalog::READ);
+
+        $this->withDeclarationFiles(function (string $path, string $namespace) use ($admin): void {
             self::assertSame(0, Artisan::call('make:permission-group', ['name' => 'Billing/Invoices']));
             self::assertFileExists($path.'/Permit/Billing/Invoices.php');
             self::assertStringContainsString("namespace {$namespace}\\Permit\\Billing", (string) file_get_contents($path.'/Permit/Billing/Invoices.php'));
 
             self::assertSame(0, Artisan::call('permit:catalog:cache'));
             self::assertTrue(resolve(CatalogCompiler::class)->load()->has('invoices::read'));
+            app()->forgetInstance(Catalog::class);
+
+            $this->actingAs($admin)->getJson($this->endpoint($admin))
+                ->assertOk()
+                ->assertJsonPath('sections.0.id', 'invoices')
+                ->assertJsonPath('sections.0.abilities.1.key', 'invoices::delete')
+                ->assertJsonPath('sections.0.abilities.1.icon', 'trash');
         });
     }
 

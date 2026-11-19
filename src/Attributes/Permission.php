@@ -13,5 +13,6 @@ final readonly class Permission
         public string $name,
         public ?string $description = null,
         public bool $default = false,
+        public ?string $icon = null,
     ) {}
 }

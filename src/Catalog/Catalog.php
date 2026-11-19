@@ -9,10 +9,10 @@ use Illuminate\Contracts\Translation\Translator;
 use InvalidArgumentException;
 
 /**
- * @phpstan-type Ability array{key: string, name: string, description: ?string, default: bool, source: string}
- * @phpstan-type Section array{kind: 'permissions'|'roles', id: string, name: string, description: ?string, order: 'alphabetical'|'locked', source: string, abilities: list<Ability>}
- * @phpstan-type PresentedAbility array{key: string, name: string, description: string}
- * @phpstan-type PresentedSection array{kind: 'permissions'|'roles', id: string, name: string, description: string, order: 'alphabetical'|'locked', abilities: list<PresentedAbility>}
+ * @phpstan-type Ability array{key: string, name: string, description: ?string, default: bool, source: string, icon?: string, iconConfig?: string}
+ * @phpstan-type Section array{kind: 'permissions'|'roles', id: string, name: string, description: ?string, order: 'alphabetical'|'locked', source: string, abilities: list<Ability>, icon?: string, iconConfig?: string}
+ * @phpstan-type PresentedAbility array{key: string, name: string, description: string, icon?: string}
+ * @phpstan-type PresentedSection array{kind: 'permissions'|'roles', id: string, name: string, description: string, order: 'alphabetical'|'locked', abilities: list<PresentedAbility>, icon?: string}
  */
 final readonly class Catalog
 {
@@ -66,7 +66,7 @@ final readonly class Catalog
     }
 
     /** @return list<PresentedSection> */
-    public function present(Translator $translator, string $locale): array
+    public function present(Translator $translator, string $locale, ?CatalogIcons $icons = null): array
     {
         $collator = new Collator($locale);
         $collator->setStrength(Collator::SECONDARY);
@@ -79,6 +79,7 @@ final readonly class Catalog
             $abilities = [];
             foreach ($section['abilities'] as $ability) {
                 $abilityName = $this->translate($translator, $ability['name'], $locale);
+                $icon = $icons?->name($ability['icon'] ?? null, $ability['iconConfig'] ?? null);
                 $abilities[] = [
                     'key' => $ability['key'],
                     'name' => $abilityName,
@@ -88,6 +89,7 @@ final readonly class Catalog
                         $locale,
                         ['name' => $abilityName],
                     ),
+                    ...($icon === null ? [] : ['icon' => $icon]),
                 ];
             }
 
@@ -95,6 +97,7 @@ final readonly class Catalog
                 usort($abilities, fn (array $first, array $second): int => $this->compare($collator, $first['name'], $second['name'], $first['key'], $second['key']));
             }
 
+            $icon = $icons?->name($section['icon'] ?? null, $section['iconConfig'] ?? null);
             $presentation = [
                 'kind' => $section['kind'],
                 'id' => $section['id'],
@@ -102,6 +105,7 @@ final readonly class Catalog
                 'description' => $this->translate($translator, $section['description'] ?? 'permit::catalog.group_description', $locale, ['name' => $name]),
                 'order' => $section['order'],
                 'abilities' => $abilities,
+                ...($icon === null ? [] : ['icon' => $icon]),
             ];
 
             if ($section['kind'] === 'roles') {

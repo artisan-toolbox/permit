@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtisanToolbox\Permit\Http\Controllers;
 
 use ArtisanToolbox\Permit\Catalog\Catalog;
+use ArtisanToolbox\Permit\Catalog\CatalogIcons;
 use ArtisanToolbox\Permit\Contracts\PermissionManagementPolicy;
 use ArtisanToolbox\Permit\ManagementAction;
 use ArtisanToolbox\Permit\Storage\AssignmentConflict;
@@ -47,14 +48,16 @@ final readonly class UserPermissions
         foreach ($this->catalog->defaults as $key => $default) {
             $values[$key] = $current->value($key) ?? $default;
         }
+        $icons = new CatalogIcons(config('permit.icons'));
 
         return response()->json([
             'subject' => $id,
             'revision' => $this->revision($id, $current),
             'canUpdate' => $canUpdate,
             'isCurrentUser' => $this->users->id($actor) === $id,
-            'sections' => $this->catalog->present($this->translator, app()->getLocale()),
+            'sections' => $this->catalog->present($this->translator, app()->getLocale(), $icons),
             'values' => (object) $values,
+            ...($icons->family === null ? [] : ['iconFamily' => $icons->family]),
         ]);
     }
 

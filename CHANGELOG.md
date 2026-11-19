@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Install the published Permit beta from Packagist in the README and Boost skill.
+- Add optional Font Awesome icons to permission groups and abilities in the management editor. Configure the icon family, generated CRUD icons, and built-in management icons in `config/permit.php`.
 
 ## [1.0.0-beta.1] - 2026-11-18
 
