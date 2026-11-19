@@ -18,6 +18,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -74,6 +76,58 @@ final class AuthorizationToolsTest extends AuthorizationTestCase
             ->assertJsonPath('sections.1.abilities.3.key', 'users::print')
             ->assertJsonPath('sections.1.abilities.4.key', 'users::audit')
             ->assertJsonPath('sections.2.name', 'Papéis');
+    }
+
+    public function test_editor_sorts_translated_labels_with_icons_before_and_after_caching(): void
+    {
+        $actor = $this->user();
+
+        $this->withDeclarationFiles(function (string $appPath, string $namespace) use ($actor): void {
+            $declaration = <<<'PHP'
+                use ArtisanToolbox\Permit\Attributes\Group;
+                use ArtisanToolbox\Permit\Attributes\Permission;
+
+                #[Group('reports', 'reports.group', icon: 'chart-column')]
+                interface Reports
+                {
+                    #[Permission('reports.archive')]
+                    public function archive(): void;
+
+                    #[Permission('reports.export', icon: 'file-export')]
+                    public function export(): void;
+                }
+                PHP;
+            (new Filesystem)->put($appPath.'/Permit/Reports.php', "<?php\nnamespace {$namespace}\\Permit;\n\n".$declaration);
+
+            app()->setLocale('en');
+            Lang::addLines([
+                'reports.group' => 'Évora reports',
+                'reports.archive' => 'View archived reports',
+                'reports.export' => 'Évora export',
+            ], 'en');
+            app()->forgetInstance(Catalog::class);
+            Permit::add($actor, Catalog::READ);
+
+            $fresh = $this->actingAs($actor)->getJson($this->endpoint($actor))
+                ->assertOk()
+                ->assertJsonPath('sections.0.id', 'reports')
+                ->assertJsonPath('sections.0.name', 'Évora reports')
+                ->assertJsonPath('sections.0.icon', 'chart-column')
+                ->assertJsonPath('sections.0.abilities.0.key', 'reports::export')
+                ->assertJsonPath('sections.0.abilities.0.name', 'Évora export')
+                ->assertJsonPath('sections.0.abilities.0.icon', 'file-export')
+                ->assertJsonPath('sections.0.abilities.1.key', 'reports::archive')
+                ->assertJsonMissingPath('sections.0.abilities.1.icon');
+
+            self::assertSame(0, Artisan::call('permit:catalog:cache'));
+            app()->useAppPath($this->temporaryPath.'/without-source');
+            app()->forgetInstance(Catalog::class);
+            Route::current()?->flushController();
+
+            $this->getJson($this->endpoint($actor))
+                ->assertOk()
+                ->assertJsonPath('sections', $fresh->json('sections'));
+        });
     }
 
     public function test_global_optimization_calls_catalog_commands_and_exclusions_work(): void

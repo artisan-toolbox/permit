@@ -166,7 +166,7 @@ final readonly class CatalogCompiler
             $abilities[] = $this->ability($method, $keyPrefix, $roleSection);
         }
 
-        return [
+        $section = [
             'kind' => $roleSection ? 'roles' : 'permissions',
             'id' => $id,
             'name' => $declaration->name ?? 'permit::catalog.roles.name',
@@ -174,8 +174,13 @@ final readonly class CatalogCompiler
             'order' => $locked === [] ? 'alphabetical' : 'locked',
             'source' => $source->getName(),
             'abilities' => $abilities,
-            ...($icon === null ? [] : ['icon' => $icon]),
         ];
+
+        if ($icon !== null) {
+            $section['icon'] = $icon;
+        }
+
+        return $section;
     }
 
     private function hasPermitMethodAttribute(ReflectionMethod $method): bool
@@ -206,14 +211,19 @@ final readonly class CatalogCompiler
         $definition = $this->instantiate($attributes[0]);
         $icon = $definition instanceof Permission ? $definition->icon : null;
 
-        return [
+        $ability = [
             'key' => $prefix.'::'.$method->getName(),
             'name' => $definition->name,
             'description' => $definition->description,
             'default' => $definition->default,
             'source' => $method->getDeclaringClass()->getName().'::'.$method->getName(),
-            ...($icon === null ? [] : ['icon' => $icon]),
         ];
+
+        if ($icon !== null) {
+            $ability['icon'] = $icon;
+        }
+
+        return $ability;
     }
 
     /**

@@ -4,6 +4,8 @@
 
 - Install the published Permit beta from Packagist in the README and Boost skill.
 - Add optional Font Awesome icons to permission groups and abilities in the management editor. Configure the icon family, generated CRUD icons, and built-in management icons in `config/permit.php`.
+- Fix catalog type analysis with PHPStan 2.2.8 in the lowest-dependency CI lane. Verify that translated labels and optional icons remain intact when the editor loads a cached catalog.
+- Run every GitHub Actions matrix entry independently and check the frontend build and committed bundles in separate steps.
 
 ## [1.0.0-beta.1] - 2026-11-18
 

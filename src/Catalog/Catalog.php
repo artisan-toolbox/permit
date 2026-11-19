@@ -80,7 +80,7 @@ final readonly class Catalog
             foreach ($section['abilities'] as $ability) {
                 $abilityName = $this->translate($translator, $ability['name'], $locale);
                 $icon = $icons?->name($ability['icon'] ?? null, $ability['iconConfig'] ?? null);
-                $abilities[] = [
+                $presentedAbility = [
                     'key' => $ability['key'],
                     'name' => $abilityName,
                     'description' => $this->translate(
@@ -89,8 +89,13 @@ final readonly class Catalog
                         $locale,
                         ['name' => $abilityName],
                     ),
-                    ...($icon === null ? [] : ['icon' => $icon]),
                 ];
+
+                if ($icon !== null) {
+                    $presentedAbility['icon'] = $icon;
+                }
+
+                $abilities[] = $presentedAbility;
             }
 
             if ($section['order'] === 'alphabetical') {
@@ -105,8 +110,11 @@ final readonly class Catalog
                 'description' => $this->translate($translator, $section['description'] ?? 'permit::catalog.group_description', $locale, ['name' => $name]),
                 'order' => $section['order'],
                 'abilities' => $abilities,
-                ...($icon === null ? [] : ['icon' => $icon]),
             ];
+
+            if ($icon !== null) {
+                $presentation['icon'] = $icon;
+            }
 
             if ($section['kind'] === 'roles') {
                 $roles[] = $presentation;

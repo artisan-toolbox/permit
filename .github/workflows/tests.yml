@@ -5,6 +5,7 @@ on:
     branches:
       - '*.x'
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,9 +17,10 @@ concurrency:
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         php: [8.5]
@@ -33,9 +35,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0
         with:
           php-version: ${{ matrix.php }}
           extensions: dom, curl, libxml, mbstring, zip, fileinfo, sqlite, pdo_sqlite, bcmath, intl
@@ -43,11 +47,17 @@ jobs:
           tools: composer:v2
           coverage: none
 
-      - name: Install dependencies
-        run: |
-          composer require --dev "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
-          composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --no-scripts
-          composer run prepare
+      - name: Validate Composer manifest
+        run: composer validate --strict --no-check-lock
+
+      - name: Set framework versions for this matrix entry
+        run: composer require --dev "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+
+      - name: Resolve and install PHP dependencies
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --no-scripts
+
+      - name: Discover Testbench packages
+        run: composer run prepare
 
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -55,11 +65,11 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Check shared agent standards
+        run: npm run standards:check
+
       - name: Install frontend dependencies
         run: npm ci
-
-      - name: Check shared agent standards
-        run: node .ai/sync.mjs --check
 
       - name: Run configured quality checks
         run: php vendor/bin/maintainer quality:check --no-interaction
@@ -67,14 +77,18 @@ jobs:
       - name: Check PHP type coverage
         run: composer test:types
 
-      - name: Verify frontend distribution
-        run: |
-          npm run build
-          npm run check:dist
-          git diff --exit-code -- dist
+      - name: Build frontend distribution
+        run: npm run build
+
+      - name: Verify frontend distribution imports
+        run: npm run check:dist
+
+      - name: Check committed frontend distribution
+        run: git diff --exit-code -- dist
 
   authorization-integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       fail-fast: false
@@ -128,13 +142,20 @@ jobs:
         image: ${{ matrix.cache == 'memcached' && 'memcached:1.6-alpine' || '' }}
         ports:
           - 11211:11211
+        options: >-
+          --health-cmd "printf 'version\r\nquit\r\n' | nc -w 2 127.0.0.1 11211 | grep -q '^VERSION '"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
 
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0
         with:
           php-version: '8.5'
           extensions: intl, pdo_sqlite, pdo_mysql, pdo_pgsql, redis, memcached
