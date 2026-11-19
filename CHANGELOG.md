@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Install the published Permit beta from Packagist in the README and Boost skill.
+
 ## [1.0.0-beta.1] - 2026-11-18
 
 ### Features

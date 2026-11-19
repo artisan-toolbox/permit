@@ -6,16 +6,16 @@ metadata:
   author: Allan Mariucci Carvalho
 ---
 
-# Use the Permit preview
+# Use Permit
 
 ## Primary goal
 
-Declare and evaluate per-user Gates with the unpublished `artisan-toolbox/permit` preview. Check the installed package version before using the API below.
+Declare and evaluate per-user Gates with the `artisan-toolbox/permit` beta. Check the installed package version before using the API below.
 
 ## Workflow
 
 1. Use PHP 8.5 with Intl, Laravel 13, and Inertia 3. Start with the user table configured for the session guard.
-2. Configure a Composer path repository for the reviewed source. Follow the [preview installation guide](https://atb.dev.br/docs/permit/installation). From the application root, run `composer require artisan-toolbox/permit:1.x-dev`.
+2. From the application root, run `composer require 'artisan-toolbox/permit:@beta'`. For a local source checkout, follow the [preview installation guide](https://atb.dev.br/docs/permit/installation).
 3. Publish `permit-config` with `php artisan vendor:publish --tag=permit-config` if the application needs to set its guard or assignment table. Set those values before migration.
 4. Run `php artisan vendor:publish --tag=permit-migrations`, then `php artisan migrate`.
 5. Run `php artisan make:permission-group Users`. The generated group declares `users::create`, `users::read`, `users::update`, and `users::delete`.

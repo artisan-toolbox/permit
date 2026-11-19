@@ -28,11 +28,12 @@ class Permit implements BeforeVersioning, Versionable, WithReadmeHead
         return (new Head)
             ->withLogo(src: 'logo/permit-icon.svg', alt: '', width: 88)
             ->withTitle('Permit')
-            ->withDescription('Laravel authorization preview for declaring Gates and managing per-user permissions and roles.')
+            ->withDescription('Laravel authorization package for declaring Gates and managing per-user permissions and roles.')
+            ->addBadge(Badge::releaseVersion('https://github.com/artisan-toolbox/permit/releases'))
             ->addBadge(Badge::make(
-                link: 'https://atb.dev.br/packages/permit/',
-                imgSrc: 'https://img.shields.io/badge/Status-Unpublished%20preview-orange?style=flat-square',
-                imgAlt: 'Status',
+                link: 'https://packagist.org/packages/artisan-toolbox/permit',
+                imgSrc: 'https://img.shields.io/badge/Packagist-F28D1A?style=flat-square&logo=packagist&logoColor=white',
+                imgAlt: 'Packagist',
             ))
             ->addBadge(Badge::make(
                 link: 'https://atb.dev.br/packages/permit/#requirements',

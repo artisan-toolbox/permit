@@ -5,7 +5,8 @@
 </div>
 
 <p id="maintainer-badges" align="center">
-<a href="https://atb.dev.br/packages/permit/"><img src="https://img.shields.io/badge/Status-Unpublished%20preview-orange?style=flat-square" alt="Status"></a>
+<a href="https://github.com/artisan-toolbox/permit/releases"><img src="https://img.shields.io/badge/version-1.0.0--beta.1-blue?style=flat-square" alt="version"></a>
+<a href="https://packagist.org/packages/artisan-toolbox/permit"><img src="https://img.shields.io/badge/Packagist-F28D1A?style=flat-square&amp;logo=packagist&amp;logoColor=white" alt="Packagist"></a>
 <a href="https://atb.dev.br/packages/permit/#requirements"><img src="https://img.shields.io/badge/PHP-%5E8.5-777BB4?style=flat-square" alt="PHP"></a>
 <a href="https://atb.dev.br/packages/permit/#requirements"><img src="https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square" alt="Laravel"></a>
 <a href="https://github.com/artisan-toolbox/permit/actions/workflows/tests.yml?query=branch%3A1.x"><img src="https://img.shields.io/github/actions/workflow/status/artisan-toolbox/permit/tests.yml?branch=1.x&amp;label=Tests&amp;style=flat-square" alt="Tests"></a>
@@ -13,16 +14,16 @@
 </p>
 
 <p id="maintainer-description" align="center">
-    Laravel authorization preview for declaring Gates and managing per-user permissions and roles.
+    Laravel authorization package for declaring Gates and managing per-user permissions and roles.
 </p>
 <!-- MAINTAINER:README_HEAD:END -->
 
-Permit is an unpublished preview for PHP 8.5 with Intl, Laravel 13, and Inertia 3. It registers declared permissions and roles as Laravel Gates.
+Permit registers declared permissions and roles as Laravel Gates. Its public API is in beta. Check the [requirements](https://atb.dev.br/packages/permit/#requirements) before installing.
 
-From a Laravel application's root, install the development branch from its configured Composer repository. The application needs the user table used by its session guard.
+Run these commands from your Laravel application root. The application needs the user table used by its session guard.
 
 ```bash
-composer require artisan-toolbox/permit:1.x-dev
+composer require 'artisan-toolbox/permit:@beta'
 php artisan vendor:publish --tag=permit-migrations
 php artisan migrate
 php artisan make:permission-group Users
