@@ -19,7 +19,7 @@
     "require": {
         "php": "^8.5",
         "ext-intl": "*",
-        "artisan-toolbox/maintainer": "^1.10.0",
+        "artisan-toolbox/maintainer": "^1.14.3",
         "illuminate/support": "^13.0",
         "inertiajs/inertia-laravel": "^3.0"
     },
