@@ -40,6 +40,7 @@ Compatibility/migration: no runtime/package API changes.
 
 ## Unreleased
 
+- Isolate the Testbench bootstrap cache before Laravel starts each test, preventing parallel Pest tests from competing for `services.php` on Windows.
 - Use the Maintainer 1.14.2 root action for dependency setup in the compatibility and authorization integration jobs.
 - Require Larastan 3.12.1 and Pest Type Coverage 5.1.1 as development minimums. Composer resolves a compatible PHPStan version through those tools for static analysis and type coverage.
 - Install the published Permit beta from Packagist in the README and Boost skill.

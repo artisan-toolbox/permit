@@ -5,6 +5,13 @@ declare(strict_types=1);
 use ArtisanToolbox\Permit\Permit;
 use Illuminate\Support\ServiceProvider;
 
+it('writes the service provider manifest outside the shared Testbench directory', function () {
+    $manifest = app()->getCachedServicesPath();
+
+    expect($manifest)->toBeFile()
+        ->and(realpath(dirname($manifest, 3)))->toBe(realpath(sys_get_temp_dir()));
+});
+
 it('resolves the singleton', function () {
     expect(app()->bound(Permit::class))->toBeTrue();
 });
