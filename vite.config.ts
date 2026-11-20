@@ -39,6 +39,7 @@ export default defineConfig({
         },
     },
     test: {
+        maxWorkers: 2,
         include: ['tests/Frontend/**/*.test.ts'],
         environmentOptions: { happyDOM: { url: 'http://localhost/' } },
     },

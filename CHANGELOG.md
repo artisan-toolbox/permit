@@ -40,6 +40,10 @@ Compatibility/migration: no runtime/package API changes.
 
 ## Unreleased
 
+- Test PHP 8.5 and 8.6 in CI with the Maintainer 1.14.4 setup action.
+
+- Run strict Maintainer 1.14.3 checks in CI. Use two workers for Vitest and for Pest on Unix. Run Pest serially on Windows.
+
 - Isolate the Testbench bootstrap cache before Laravel starts each test, preventing parallel Pest tests from competing for `services.php` on Windows.
 - Use the Maintainer 1.14.2 root action for dependency setup in the compatibility and authorization integration jobs.
 - Require Larastan 3.12.1 and Pest Type Coverage 5.1.1 as development minimums. Composer resolves a compatible PHPStan version through those tools for static analysis and type coverage.

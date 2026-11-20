@@ -30,7 +30,7 @@
     "dev": "vp dev",
     "check": "vp check",
     "check:fix": "vp check --fix",
-    "test": "vp test",
+    "test": "vp test run",
     "typecheck": "vue-tsc --noEmit",
     "check:dist": "node scripts/check-distribution.mjs",
     "release:build": "npm run check && npm run typecheck && npm run test && npm run build && npm run check:dist"
