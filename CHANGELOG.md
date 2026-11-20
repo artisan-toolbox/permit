@@ -40,6 +40,8 @@ Compatibility/migration: no runtime/package API changes.
 
 ## Unreleased
 
+- Use the Maintainer 1.14.2 root action for dependency setup in the compatibility and authorization integration jobs.
+- Require Larastan 3.12.1 and Pest Type Coverage 5.1.1 as development minimums. Composer resolves a compatible PHPStan version through those tools for static analysis and type coverage.
 - Install the published Permit beta from Packagist in the README and Boost skill.
 - Add optional Font Awesome icons to permission groups and abilities in the management editor. Configure the icon family, generated CRUD icons, and built-in management icons in `config/permit.php`.
 - Fix catalog type analysis with PHPStan 2.2.8 in the lowest-dependency CI lane. Verify that translated labels and optional icons remain intact when the editor loads a cached catalog.
