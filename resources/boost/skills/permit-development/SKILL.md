@@ -63,7 +63,7 @@ The Vue plugin exposes the actor's Inertia Gate results through `<Gate>`, `$gate
 
 ### Show icons in the permission editor
 
-Use a Permit preview that supports the `icon` argument and a compatible Front Awesome editor. Follow the [editor setup guide](https://atb.dev.br/docs/permit/management#enable-the-editor). In `app/Permit/Reports.php`, declare a group and permission with Font Awesome icon names.
+Use Permit 1.0.0-beta.2 and Front Awesome 1.0.0-beta.6 or later to show catalog icons. Follow the [editor setup guide](https://atb.dev.br/docs/permit/management#enable-the-editor). In `app/Permit/Reports.php`, declare a group and permission with Font Awesome icon names.
 
 ```php
 <?php
