@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.0.0-beta.3] - 2026-11-20
+
+### Fixes
+
+- **Isolate Testbench bootstrap caches before Laravel boots** (`4924cde`)
+  Creates a unique system-temporary bootstrap directory and its `cache` subdirectory for each Testbench test, then configures Laravel to use that path during application resolution. This prevents parallel Pest tests from contending for a shared `services.php` manifest on Windows. The directory is removed even if parent teardown throws. A regression test verifies that the service provider manifest exists under the system temporary directory rather than in the shared Testbench directory. Authorization fixtures now use Laravel’s default bootstrap path while retaining their fixture app path and namespace. No application changes are required.
+
+### Documentation
+
+- **Document version requirements for permission editor icons** (`151f890`)
+  Clarifies that displaying catalog icons in the permission editor requires Permit 1.0.0-beta.2 and Front Awesome 1.0.0-beta.6 or later. The reports catalog example still uses Font Awesome icon names in `app/Permit/Reports.php`. This is a documentation-only change.
+
+### Build
+
+- **Upgrade Maintainer and standardize local quality checks** (`d013651`)
+  Raises the development minimums to Maintainer `^1.14.3`, Larastan `^3.12.1`, and Pest Type Coverage `^5.1.1`. Removes the direct PHPStan requirement and its `^2.2.8 <2.3.6` constraint so Composer can resolve a compatible version through the remaining tools. `composer test` now runs PHPStan, Pint, and Pest through Maintainer’s strict, non-interactive quality check, then runs the type coverage check separately. Pest defaults to two workers on non-Windows platforms and serial execution on Windows; set `MAINTAINER_PEST_PARALLEL=false` to keep serial runs or use `MAINTAINER_PEST_PROCESSES` to change the worker count. Vitest is capped at two workers, and `npm test` runs once without watching, including when called by `release:build`. Maintainer also gains separate environment-configurable AI models for commit messages, release type suggestions, release notes, and changelog updates, all defaulting to `gpt-6.2-sol`, plus separate local feedback and project locale settings. The project locale defaults to `en`, and the release workflow is set to `tests.yml`. These changes affect development and release tooling, not the runtime API.
+
+### Continuous Integration
+
+- **Add PHP 8.6 to the CI test matrix** (`273e83d`)
+  Runs the main test suite on PHP 8.6 alongside PHP 8.5 on Ubuntu and Windows. The authorization integration checks also cover both PHP versions for PostgreSQL with Redis and MariaDB with Memcached. This expands compatibility testing without changing the application API.
+
+- **Use Maintainer to set up CI dependencies** (`ff8f6d2`)
+  Consolidates dependency setup for the compatibility matrix and authorization integration jobs through the Maintainer root action, introduced at 1.14.2 and updated to 1.14.4 in the final workflow. The main job retains `prefer-lowest` and `prefer-stable` Composer resolution and Node.js 24 with npm caching, but no longer explicitly overrides the Laravel `13.*` and Testbench `11.*` constraints. CI runs Maintainer quality checks in strict, non-interactive mode. Concurrency is scoped by event and ref so newer pull request runs cancel older ones, while non-pull-request runs are grouped by commit SHA.
+
 ## [1.0.0-beta.2] - 2026-11-19
 
 ### Features
