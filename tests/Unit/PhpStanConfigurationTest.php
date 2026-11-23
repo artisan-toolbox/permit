@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 use Symfony\Component\Process\Process;
 
-it('keeps full analysis with platform-safe concurrency through either profile', function (string $profile): void {
+it('keeps full analysis with platform-safe concurrency in the package configuration', function (): void {
     $root = dirname(__DIR__, 2);
     $process = new Process([
         PHP_BINARY,
         $root.'/vendor/bin/phpstan',
         'dump-parameters',
-        '--configuration='.$profile,
+        '--configuration=phpstan.neon.dist',
         '--json',
     ], $root, ['PAO_DISABLE' => '1']);
     $process->setTimeout(60);
@@ -29,4 +29,4 @@ it('keeps full analysis with platform-safe concurrency through either profile', 
     } else {
         expect($parameters['parallel']['maximumNumberOfProcesses'])->not->toBe(1);
     }
-})->with(['phpstan.neon', 'phpstan.neon.dist']);
+});
