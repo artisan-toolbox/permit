@@ -5,6 +5,8 @@
 - Add `WithRole` to require a permission grant and all roles in a comma-separated list. Pass `RoleMatch::Or` to accept any listed role. A group-level requirement covers its generated CRUD permissions and custom methods.
 - Add `ManageableByRoleUser` to limit assignment editing to operators with any listed role. Pass `RoleMatch::And` to require every role. Saving visible changes preserves protected assignments, including those that still use their declaration defaults.
 
+On Windows, PHPStan uses one analysis worker so Larastan can rebuild Testbench's shared service manifest during package checks.
+
 ## [1.0.0-beta.3] - 2026-11-20
 
 ### Fixes
