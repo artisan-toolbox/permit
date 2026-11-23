@@ -23,10 +23,13 @@ final class GateRegistration
         $this->assertAvailable($catalog);
 
         foreach ($catalog->defaults as $key => $default) {
-            $callback = static function (Authenticatable $actor) use ($key, $default): bool {
+            $roleRules = $catalog->requiredRoles[$key] ?? [];
+            $callback = function (Authenticatable $actor) use ($key, $default, $roleRules): bool {
                 $user = resolve(Users::class)->supported($actor);
 
-                return $user !== null && (resolve(AssignmentStore::class)->snapshot($user)->value($key) ?? $default);
+                return $user !== null
+                    && (resolve(AssignmentStore::class)->snapshot($user)->value($key) ?? $default)
+                    && ($roleRules === [] || Catalog::satisfiesRoleRules($this->gate->forUser($actor), $roleRules));
             };
             $this->gate->define($key, $callback);
             $this->callbacks[$key] = $callback;

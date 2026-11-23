@@ -1,6 +1,6 @@
 ---
 name: permit-development
-description: Use Artisan Toolbox Permit in a Laravel application to declare permissions and roles, authorize routes, assign access, configure permission editor icons, and inspect or share Gate decisions.
+description: Use Artisan Toolbox Permit in a Laravel application to declare permissions and roles, authorize routes, restrict assignment editing by role, configure permission editor icons, and inspect or share Gate decisions.
 license: MIT
 metadata:
   author: Allan Mariucci Carvalho
@@ -60,6 +60,23 @@ The Vue plugin exposes the actor's Inertia Gate results through `<Gate>`, `$gate
     <a href="/users">Users</a>
 </Gate>
 ```
+
+### Restrict actions and assignment edits by role
+
+These attributes require a Permit version that includes the source preview after `1.0.0-beta.3`. Declare `admin()` and `developer()` role methods first. In a permission group, import `WithRole` and `ManageableByRoleUser` from `ArtisanToolbox\Permit\Attributes` and the enum `ArtisanToolbox\Permit\RoleMatch`.
+
+```php
+#[Permission('Refund invoices')]
+#[WithRole('admin,developer', RoleMatch::Or)]
+#[ManageableByRoleUser('admin,developer', RoleMatch::And)]
+public function refund(): void;
+```
+
+In this example, the user needs `invoices::refund` and either role to refund an invoice. The operator needs both roles to see or edit the refund assignment. Saving other changes preserves its hidden value or default.
+
+With one string argument, `WithRole` defaults to `RoleMatch::And` and `ManageableByRoleUser` defaults to `RoleMatch::Or`. Supply exact role method names separated by commas. Permit trims spaces and ignores duplicates. Empty entries and undeclared roles fail catalog validation. Apply either attribute to the group to cover generated CRUD keys and custom permissions. The user must satisfy both the group and method declarations, each in its own mode.
+
+If only administrators should grant the role itself, add `#[ManageableByRoleUser('admin')]` to the `admin()` role declaration. Seed the first administrator with `Permit::add($operator, 'role::admin')` in trusted application code. Follow the [declaration example](https://atb.dev.br/docs/permit/declarations#require-a-role) and the [editor walkthrough](https://atb.dev.br/docs/permit/management#restrict-assignment-edits).
 
 ### Show icons in the permission editor
 

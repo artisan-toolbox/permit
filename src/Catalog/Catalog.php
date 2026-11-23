@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace ArtisanToolbox\Permit\Catalog;
 
 use Collator;
+use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Contracts\Translation\Translator;
 use InvalidArgumentException;
 
 /**
- * @phpstan-type Ability array{key: string, name: string, description: ?string, default: bool, source: string, icon?: string, iconConfig?: string}
- * @phpstan-type Section array{kind: 'permissions'|'roles', id: string, name: string, description: ?string, order: 'alphabetical'|'locked', source: string, abilities: list<Ability>, icon?: string, iconConfig?: string}
+ * @phpstan-type RoleClauses list<non-empty-list<string>>
+ * @phpstan-type Ability array{key: string, name: string, description: ?string, default: bool, source: string, icon?: string, iconConfig?: string, withRole?: RoleClauses, manageableByRole?: RoleClauses}
+ * @phpstan-type Section array{kind: 'permissions'|'roles', id: string, name: string, description: ?string, order: 'alphabetical'|'locked', source: string, abilities: list<Ability>, icon?: string, iconConfig?: string, withRole?: RoleClauses, manageableByRole?: RoleClauses}
  * @phpstan-type PresentedAbility array{key: string, name: string, description: string, icon?: string}
  * @phpstan-type PresentedSection array{kind: 'permissions'|'roles', id: string, name: string, description: string, order: 'alphabetical'|'locked', abilities: list<PresentedAbility>, icon?: string}
  */
@@ -23,6 +25,12 @@ final readonly class Catalog
     /** @var array<string, bool> */
     public array $defaults;
 
+    /** @var array<string, RoleClauses> */
+    public array $requiredRoles;
+
+    /** @var array<string, RoleClauses> */
+    public array $manageableByRoles;
+
     public string $fingerprint;
 
     /** @param list<Section> $sections */
@@ -31,6 +39,8 @@ final readonly class Catalog
         $defaults = [];
         $sources = [];
         $groups = [];
+        $requiredRoles = [];
+        $manageableByRoles = [];
         foreach ($sections as $section) {
             if (isset($groups[$section['id']])) {
                 throw new InvalidArgumentException("Duplicate Permit section [{$section['id']}] in [{$section['source']}] and [{$groups[$section['id']]}].");
@@ -52,12 +62,36 @@ final readonly class Catalog
                     throw new InvalidArgumentException("Permit ability [{$ability['source']}] requires a name.");
                 }
                 $sources[$comparisonKey] = $ability['source'];
-                $defaults[$ability['key']] = $ability['default'];
+                $key = $ability['key'];
+                $defaults[$key] = $ability['default'];
+                $required = $this->combinedRoles($section['withRole'] ?? [], $ability['withRole'] ?? []);
+                $manageable = $this->combinedRoles($section['manageableByRole'] ?? [], $ability['manageableByRole'] ?? []);
+
+                if ($required !== []) {
+                    $requiredRoles[$key] = $required;
+                }
+
+                if ($manageable !== []) {
+                    $manageableByRoles[$key] = $manageable;
+                }
             }
         }
+        foreach ([$requiredRoles, $manageableByRoles] as $requirements) {
+            foreach ($requirements as $key => $clauses) {
+                foreach (array_merge(...$clauses) as $role) {
+                    throw_unless(isset($defaults[$role]), InvalidArgumentException::class, "Permit ability [{$key}] references undeclared role [{$role}].");
+                }
+            }
+        }
+
         ksort($defaults, SORT_STRING);
+        ksort($requiredRoles, SORT_STRING);
+        ksort($manageableByRoles, SORT_STRING);
+        $this->requiredRoles = $requiredRoles;
+        $this->manageableByRoles = $manageableByRoles;
         $this->defaults = $defaults;
-        $this->fingerprint = hash('sha256', json_encode($defaults, JSON_THROW_ON_ERROR));
+        $rules = $requiredRoles === [] && $manageableByRoles === [] ? $defaults : [$defaults, $requiredRoles, $manageableByRoles];
+        $this->fingerprint = hash('sha256', json_encode($rules, JSON_THROW_ON_ERROR));
     }
 
     public function has(string $ability): bool
@@ -65,8 +99,11 @@ final readonly class Catalog
         return isset($this->defaults[$ability]);
     }
 
-    /** @return list<PresentedSection> */
-    public function present(Translator $translator, string $locale, ?CatalogIcons $icons = null): array
+    /**
+     * @param  array<string, bool>|null  $visible
+     * @return list<PresentedSection>
+     */
+    public function present(Translator $translator, string $locale, ?CatalogIcons $icons = null, ?array $visible = null): array
     {
         $collator = new Collator($locale);
         $collator->setStrength(Collator::SECONDARY);
@@ -78,6 +115,10 @@ final readonly class Catalog
             $name = $this->translate($translator, $section['name'], $locale);
             $abilities = [];
             foreach ($section['abilities'] as $ability) {
+                if ($visible !== null && ! isset($visible[$ability['key']])) {
+                    continue;
+                }
+
                 $abilityName = $this->translate($translator, $ability['name'], $locale);
                 $icon = $icons?->name($ability['icon'] ?? null, $ability['iconConfig'] ?? null);
                 $presentedAbility = [
@@ -96,6 +137,10 @@ final readonly class Catalog
                 }
 
                 $abilities[] = $presentedAbility;
+            }
+
+            if ($abilities === []) {
+                continue;
             }
 
             if ($section['order'] === 'alphabetical') {
@@ -126,6 +171,22 @@ final readonly class Catalog
         usort($sections, fn (array $first, array $second): int => $this->compare($collator, $first['name'], $second['name'], $first['id'], $second['id']));
 
         return [...$sections, ...$roles];
+    }
+
+    /** @param RoleClauses $clauses */
+    public static function satisfiesRoleRules(Gate $gate, array $clauses): bool
+    {
+        return array_all($clauses, static fn (array $alternatives): bool => $gate->any($alternatives));
+    }
+
+    /**
+     * @param  RoleClauses  $group
+     * @param  RoleClauses  $method
+     * @return RoleClauses
+     */
+    private function combinedRoles(array $group, array $method): array
+    {
+        return array_values(array_unique([...$group, ...$method], SORT_REGULAR));
     }
 
     /** @param array<string, string> $replace */

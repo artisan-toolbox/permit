@@ -26,6 +26,7 @@ use JsonException;
 use LogicException;
 use stdClass;
 
+/** @phpstan-import-type RoleClauses from Catalog */
 final readonly class UserPermissions
 {
     public function __construct(
@@ -44,18 +45,19 @@ final readonly class UserPermissions
         $current = $this->assignments->snapshot($subject);
         $canUpdate = $this->gate->forUser($actor)->allows(Catalog::UPDATE)
             && $this->inScope($actor, $subject, ManagementAction::Update);
+        $hidden = $this->hiddenAbilities($actor);
         $values = [];
-        foreach ($this->catalog->defaults as $key => $default) {
+        foreach (array_diff_key($this->catalog->defaults, $hidden) as $key => $default) {
             $values[$key] = $current->value($key) ?? $default;
         }
         $icons = new CatalogIcons(config('permit.icons'));
 
         return response()->json([
             'subject' => $id,
-            'revision' => $this->revision($id, $current),
+            'revision' => $this->revision($id, $current, $hidden),
             'canUpdate' => $canUpdate,
             'isCurrentUser' => $this->users->id($actor) === $id,
-            'sections' => $this->catalog->present($this->translator, app()->getLocale(), $icons),
+            'sections' => $this->catalog->present($this->translator, app()->getLocale(), $icons, $values),
             'values' => (object) $values,
             ...($icons->family === null ? [] : ['iconFamily' => $icons->family]),
         ]);
@@ -68,19 +70,23 @@ final readonly class UserPermissions
         $id = $this->users->id($subject);
         [$revision, $values] = $this->payload($request);
         $current = $this->assignments->fresh($subject);
+        $hidden = $this->hiddenAbilities($actor);
 
-        if (! hash_equals($this->revision($id, $current), $revision)) {
+        if (! hash_equals($this->revision($id, $current, $hidden), $revision)) {
             return $this->conflict();
         }
 
-        $defaults = $this->catalog->defaults;
+        $defaults = array_diff_key($this->catalog->defaults, $hidden);
+        $values = array_diff_key($values, $hidden);
 
         if (array_diff_key($defaults, $values) !== [] || array_diff_key($values, $defaults) !== []) {
             throw $this->invalid('values');
         }
 
+        $preserved = array_intersect_key($current->permissions + $current->roles, $hidden);
+
         try {
-            $this->assignments->replace($subject, $current->revision, $values);
+            $this->assignments->replace($subject, $current->revision, $values + $preserved);
         } catch (AssignmentConflict) {
             return $this->conflict();
         }
@@ -155,9 +161,18 @@ final readonly class UserPermissions
         return [$payload->revision, $values];
     }
 
-    private function revision(string $id, Assignments $assignments): string
+    /** @return array<string, RoleClauses> */
+    private function hiddenAbilities(Authenticatable $actor): array
     {
-        return hash('sha256', json_encode([$id, $assignments->revision, $this->catalog->fingerprint], JSON_THROW_ON_ERROR));
+        $gate = $this->gate->forUser($actor);
+
+        return array_filter($this->catalog->manageableByRoles, static fn (array $clauses): bool => ! Catalog::satisfiesRoleRules($gate, $clauses));
+    }
+
+    /** @param array<string, RoleClauses> $hidden */
+    private function revision(string $id, Assignments $assignments, array $hidden): string
+    {
+        return hash('sha256', json_encode([$id, $assignments->revision, $this->catalog->fingerprint, ...array_keys($hidden)], JSON_THROW_ON_ERROR));
     }
 
     private function invalid(string $key): ValidationException

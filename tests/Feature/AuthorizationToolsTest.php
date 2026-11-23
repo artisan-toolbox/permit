@@ -172,6 +172,29 @@ final class AuthorizationToolsTest extends AuthorizationTestCase
         });
     }
 
+    #[DataProvider('invalidCachedRoleLists')]
+    public function test_a_malformed_cached_role_list_falls_back_to_source(mixed $rule): void
+    {
+        self::assertSame(0, Artisan::call('permit:catalog:cache'));
+        $path = $this->temporaryPath.'/cache/permit.php';
+        $cached = require $path;
+        $cached['sections'][1]['abilities'][0]['manageableByRole'] = $rule;
+        (new Filesystem)->put($path, '<?php return '.var_export($cached, true).';');
+
+        app()->useAppPath($this->temporaryPath.'/without-source');
+        self::assertFalse(resolve(CatalogCompiler::class)->load()->has('users::print'));
+    }
+
+    /** @return iterable<string, array{mixed}> */
+    public static function invalidCachedRoleLists(): iterable
+    {
+        yield 'empty' => [[]];
+        yield 'empty role clause' => [[[]]];
+        yield 'non-list' => [[['role' => 'role::admin']]];
+        yield 'non-string entry' => [[[true]]];
+        yield 'legacy scalar' => ['role::admin'];
+    }
+
     public function test_rebuilding_a_cached_catalog_rejects_a_new_host_gate_collision(): void
     {
         self::assertSame(0, Artisan::call('permit:catalog:cache'));
@@ -199,7 +222,7 @@ final class AuthorizationToolsTest extends AuthorizationTestCase
         $previous = file_get_contents($path);
         $this->withDeclarationFiles(function (string $appPath, string $namespace) use ($declaration, $message): void {
             (new Filesystem)->put($appPath.'/Permit/InvalidDefinition.php', "<?php\nnamespace {$namespace}\\Permit;\n"
-                .'use ArtisanToolbox\\Permit\\Attributes\\{ Group, CRUD, Permission, Roles, Role };'."\n".$declaration);
+                .'use ArtisanToolbox\\Permit\\Attributes\\{ Group, CRUD, Permission, Roles, Role, WithRole, ManageableByRoleUser };'."\n".$declaration);
             $this->expectException(InvalidArgumentException::class);
             $this->expectExceptionMessage($message);
             Artisan::call('permit:catalog:cache');
@@ -211,6 +234,15 @@ final class AuthorizationToolsTest extends AuthorizationTestCase
     /** @return iterable<string, array{string, string}> */
     public static function invalidDeclarations(): iterable
     {
+        yield 'empty role in a group list' => ["#[Group('example', 'Example')] #[CRUD] #[WithRole('admin, ,developer')] interface InvalidDefinition {}", 'empty role name'];
+        yield 'trailing comma in an editor list' => ["#[Roles] interface InvalidDefinition { #[Role('Admin')] #[ManageableByRoleUser('admin,')] public function admin(): void; }", 'empty role name'];
+        yield 'string role match' => ["#[Group('example', 'Example')] #[CRUD] #[WithRole('admin,developer', 'or')] interface InvalidDefinition {}", 'must be of type ArtisanToolbox\\Permit\\RoleMatch'];
+        yield 'undeclared alternative' => ["#[Roles] interface InvalidDefinition { #[Role('Admin')] #[ManageableByRoleUser('admin, missing')] public function admin(): void; }", 'references undeclared role [role::missing]'];
+        yield 'unknown group role' => ["#[Group('example', 'Example')] #[CRUD] #[WithRole('missing')] interface InvalidDefinition {}", 'references undeclared role [role::missing]'];
+        yield 'unknown editor role' => ["#[Group('example', 'Example')] interface InvalidDefinition { #[Permission('Send')] #[ManageableByRoleUser('missing')] public function send(): void; }", 'references undeclared role [role::missing]'];
+        yield 'role dependency on a role' => ["#[Roles] interface InvalidDefinition { #[Role('Admin')] #[WithRole('admin')] public function admin(): void; }", 'WithRole belongs on permission groups and permission methods'];
+        yield 'repeated rule' => ["#[Group('example', 'Example')] #[CRUD] #[WithRole('a')] #[WithRole('b')] interface InvalidDefinition {}", 'cannot be repeated'];
+        yield 'orphan role rule' => ["#[ManageableByRoleUser('admin')] interface InvalidDefinition {}", 'require a group or roles interface'];
         yield 'reserved' => ["#[Group('role', 'Roles')] #[CRUD] interface InvalidDefinition {}", 'Invalid or reserved group ID'];
         yield 'bad placement' => ["#[Group('example', 'Example')] #[CRUD] class InvalidDefinition {}", 'standalone interface'];
         yield 'bad member placement' => ["class InvalidDefinition { #[Group('example', 'Example')] public const int Wrong = 1; }", 'interfaces and their methods'];

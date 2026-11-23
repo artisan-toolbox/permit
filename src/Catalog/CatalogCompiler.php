@@ -7,10 +7,13 @@ namespace ArtisanToolbox\Permit\Catalog;
 use ArtisanToolbox\Permit\Attributes\CRUD;
 use ArtisanToolbox\Permit\Attributes\Group;
 use ArtisanToolbox\Permit\Attributes\LockedOrder;
+use ArtisanToolbox\Permit\Attributes\ManageableByRoleUser;
 use ArtisanToolbox\Permit\Attributes\Permission;
 use ArtisanToolbox\Permit\Attributes\Role;
 use ArtisanToolbox\Permit\Attributes\Roles;
+use ArtisanToolbox\Permit\Attributes\WithRole;
 use ArtisanToolbox\Permit\Console\PhpLiteral;
+use ArtisanToolbox\Permit\RoleMatch;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
 use InvalidArgumentException;
@@ -27,9 +30,11 @@ use Throwable;
  */
 final readonly class CatalogCompiler
 {
-    private const int FORMAT = 2;
+    private const int FORMAT = 4;
 
-    private const array ATTRIBUTES = [Group::class, Permission::class, Role::class, Roles::class, CRUD::class, LockedOrder::class];
+    private const array DECLARATIONS = [Group::class, Permission::class, Role::class, Roles::class, CRUD::class, LockedOrder::class];
+
+    private const array ATTRIBUTES = [...self::DECLARATIONS, WithRole::class, ManageableByRoleUser::class];
 
     public function __construct(
         private Application $app,
@@ -116,6 +121,7 @@ final readonly class CatalogCompiler
         $roles = $source->getAttributes(Roles::class);
         $crud = $source->getAttributes(CRUD::class);
         $locked = $source->getAttributes(LockedOrder::class);
+        $roleRules = $this->roleRules($source, $roles !== []);
         $methods = array_values(array_filter($source->getMethods(), fn (ReflectionMethod $method): bool => $method->getDeclaringClass()->getName() === $source->getName()));
         $hasMarker = $group !== [] || $roles !== [];
 
@@ -130,7 +136,7 @@ final readonly class CatalogCompiler
         }
 
         if (! $hasMarker) {
-            throw_if($crud !== [] || $locked !== [] || array_any($methods, $this->hasPermitMethodAttribute(...)), InvalidArgumentException::class, 'Permit attributes require a group or roles interface.');
+            throw_if($crud !== [] || $locked !== [] || $roleRules !== [] || array_any($methods, $this->hasPermitMethodAttribute(...)), InvalidArgumentException::class, 'Permit attributes require a group or roles interface.');
 
             return null;
         }
@@ -174,6 +180,7 @@ final readonly class CatalogCompiler
             'order' => $locked === [] ? 'alphabetical' : 'locked',
             'source' => $source->getName(),
             'abilities' => $abilities,
+            ...$roleRules,
         ];
 
         if ($icon !== null) {
@@ -197,7 +204,7 @@ final readonly class CatalogCompiler
         $attribute = $roles ? Role::class : Permission::class;
         $attributes = $method->getAttributes($attribute);
         $permitAttributes = array_filter(
-            self::ATTRIBUTES,
+            self::DECLARATIONS,
             fn (string $name): bool => $method->getAttributes($name) !== [],
         );
         $type = $method->getReturnType();
@@ -217,6 +224,7 @@ final readonly class CatalogCompiler
             'description' => $definition->description,
             'default' => $definition->default,
             'source' => $method->getDeclaringClass()->getName().'::'.$method->getName(),
+            ...$this->roleRules($method, $roles),
         ];
 
         if ($icon !== null) {
@@ -224,6 +232,36 @@ final readonly class CatalogCompiler
         }
 
         return $ability;
+    }
+
+    /**
+     * @param  ReflectionClass<object>|ReflectionMethod  $source
+     * @return array{withRole?: non-empty-list<non-empty-list<string>>, manageableByRole?: non-empty-list<non-empty-list<string>>}
+     */
+    private function roleRules(ReflectionClass|ReflectionMethod $source, bool $roles): array
+    {
+        $rules = [];
+        foreach (['withRole' => WithRole::class, 'manageableByRole' => ManageableByRoleUser::class] as $key => $class) {
+            $attributes = $source->getAttributes($class);
+
+            if ($attributes === []) {
+                continue;
+            }
+
+            throw_if(count($attributes) > 1, InvalidArgumentException::class, 'Permit declaration attributes cannot be repeated.');
+            throw_if($roles && $class === WithRole::class, InvalidArgumentException::class, 'WithRole belongs on permission groups and permission methods.');
+            $rule = $this->instantiate($attributes[0]);
+            $names = array_map(trim(...), explode(',', $rule->role));
+            throw_if(in_array('', $names, true), InvalidArgumentException::class, "Permit attribute [{$class}] contains an empty role name.");
+            $keys = array_map(static fn (string $name): string => 'role::'.$name, array_unique($names));
+            sort($keys, SORT_STRING);
+            $rules[$key] = match ($rule->match) {
+                RoleMatch::And => array_map(static fn (string $role): array => [$role], $keys),
+                RoleMatch::Or => [$keys],
+            };
+        }
+
+        return $rules;
     }
 
     /**
@@ -306,6 +344,7 @@ final readonly class CatalogCompiler
                 || ($section['description'] !== null && ! is_string($section['description']))
                 || (isset($section['icon']) && ! is_string($section['icon']))
                 || (isset($section['iconConfig']) && ! is_string($section['iconConfig']))
+                || ! $this->validRoleRules($section, $section['kind'] === 'roles')
                 || ! is_array($section['abilities'] ?? null) || ! array_is_list($section['abilities'])) {
                 return null;
             }
@@ -314,6 +353,7 @@ final readonly class CatalogCompiler
                     || ! is_string($ability['source'] ?? null) || ! is_bool($ability['default'] ?? null)
                     || (isset($ability['icon']) && ! is_string($ability['icon']))
                     || (isset($ability['iconConfig']) && ! is_string($ability['iconConfig']))
+                    || ! $this->validRoleRules($ability, $section['kind'] === 'roles')
                     || ! array_key_exists('description', $ability) || ($ability['description'] !== null && ! is_string($ability['description']))) {
                     return null;
                 }
@@ -324,6 +364,31 @@ final readonly class CatalogCompiler
         $sections = $cached['sections'];
 
         return $sections;
+    }
+
+    /** @param array<array-key, mixed> $declaration */
+    private function validRoleRules(array $declaration, bool $roles): bool
+    {
+        foreach (['withRole', 'manageableByRole'] as $key) {
+            if (! array_key_exists($key, $declaration)) {
+                continue;
+            }
+
+            $clauses = $declaration[$key];
+
+            if (($roles && $key === 'withRole') || ! is_array($clauses) || ! array_is_list($clauses) || $clauses === []) {
+                return false;
+            }
+
+            foreach ($clauses as $keys) {
+                if (! is_array($keys) || ! array_is_list($keys) || $keys === []
+                    || array_any($keys, static fn (mixed $role): bool => ! is_string($role) || ! str_starts_with($role, 'role::'))) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private function path(): string
