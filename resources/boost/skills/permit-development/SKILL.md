@@ -63,7 +63,7 @@ The Vue plugin exposes the actor's Inertia Gate results through `<Gate>`, `$gate
 
 ### Restrict actions and assignment edits by role
 
-These attributes require a Permit version that includes the source preview after `1.0.0-beta.3`. Declare `admin()` and `developer()` role methods first. In a permission group, import `WithRole` and `ManageableByRoleUser` from `ArtisanToolbox\Permit\Attributes` and the enum `ArtisanToolbox\Permit\RoleMatch`.
+These attributes require Permit `1.0.0-beta.4` or later. Declare `admin()` and `developer()` role methods first. In a permission group, import `WithRole` and `ManageableByRoleUser` from `ArtisanToolbox\Permit\Attributes` and the enum `ArtisanToolbox\Permit\RoleMatch`.
 
 ```php
 #[Permission('Refund invoices')]

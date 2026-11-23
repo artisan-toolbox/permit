@@ -1,11 +1,16 @@
 # Changelog
 
-## Unreleased
+## [1.0.0-beta.4] - 2026-11-23
 
-- Add `WithRole` to require a permission grant and all roles in a comma-separated list. Pass `RoleMatch::Or` to accept any listed role. A group-level requirement covers its generated CRUD permissions and custom methods.
-- Add `ManageableByRoleUser` to limit assignment editing to operators with any listed role. Pass `RoleMatch::And` to require every role. Saving visible changes preserves protected assignments, including those that still use their declaration defaults.
+### Features
 
-On Windows, PHPStan uses one analysis worker so Larastan can rebuild Testbench's shared service manifest during package checks.
+- Add `WithRole` to require a permission grant and all listed roles by default. Pass `RoleMatch::Or` to accept any listed role. Group rules cover generated CRUD permissions and custom permissions.
+- Add `ManageableByRoleUser` to require any listed role to view and edit an assignment by default. Pass `RoleMatch::And` to require all listed roles. The editor omits protected assignments and hides groups with no visible permissions. Saving preserves hidden assignments and defaults, even if the request includes a hidden key. A change to the visible keys invalidates an open editor's revision.
+- Both attributes accept comma-separated role method names. When a group and a method each declare a rule, both rules must pass. If you use a cached catalog, rebuild it with `php artisan permit:catalog:cache` after upgrading.
+
+### Continuous Integration
+
+- Run PHPStan with one analysis worker on Windows to prevent competing Larastan writes to the Testbench service manifest. Verify that the distributed PHPStan configuration loads the platform settings.
 
 ## [1.0.0-beta.3] - 2026-11-20
 

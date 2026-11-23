@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Process;
 
 class Permit implements BeforeVersioning, Versionable, WithReadmeHead
 {
-    public const string VERSION = '1.0.0-beta.3';
+    public const string VERSION = '1.0.0-beta.4';
 
     public static function beforeVersioning(string $current, string $next): void
     {
