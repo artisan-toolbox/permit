@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Include `WithRole` requirements in the permission editor's GET catalog. Use the operator's visible role names and keep hidden role names private. Operators can still assign visible permissions before the selected user meets their requirements.
+
 ## [1.0.0-beta.4] - 2026-11-23
 
 ### Features

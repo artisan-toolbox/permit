@@ -13,7 +13,7 @@ use InvalidArgumentException;
  * @phpstan-type RoleClauses list<non-empty-list<string>>
  * @phpstan-type Ability array{key: string, name: string, description: ?string, default: bool, source: string, icon?: string, iconConfig?: string, withRole?: RoleClauses, manageableByRole?: RoleClauses}
  * @phpstan-type Section array{kind: 'permissions'|'roles', id: string, name: string, description: ?string, order: 'alphabetical'|'locked', source: string, abilities: list<Ability>, icon?: string, iconConfig?: string, withRole?: RoleClauses, manageableByRole?: RoleClauses}
- * @phpstan-type PresentedAbility array{key: string, name: string, description: string, icon?: string}
+ * @phpstan-type PresentedAbility array{key: string, name: string, description: string, icon?: string, roleRequirements?: non-empty-list<non-empty-list<string|null>>}
  * @phpstan-type PresentedSection array{kind: 'permissions'|'roles', id: string, name: string, description: string, order: 'alphabetical'|'locked', abilities: list<PresentedAbility>, icon?: string}
  */
 final readonly class Catalog
@@ -110,6 +110,17 @@ final readonly class Catalog
         $collator->setAttribute(Collator::NORMALIZATION_MODE, Collator::ON);
         $sections = [];
         $roles = [];
+        $roleNames = [];
+
+        foreach ($this->sections as $section) {
+            if ($section['kind'] === 'roles') {
+                foreach ($section['abilities'] as $role) {
+                    if ($visible === null || isset($visible[$role['key']])) {
+                        $roleNames[$role['key']] = $this->translate($translator, $role['name'], $locale);
+                    }
+                }
+            }
+        }
 
         foreach ($this->sections as $section) {
             $name = $this->translate($translator, $section['name'], $locale);
@@ -134,6 +145,18 @@ final readonly class Catalog
 
                 if ($icon !== null) {
                     $presentedAbility['icon'] = $icon;
+                }
+
+                $requirements = $this->requiredRoles[$ability['key']] ?? [];
+
+                if ($requirements !== []) {
+                    $presentedAbility['roleRequirements'] = array_map(
+                        static fn (array $clause): array => array_map(
+                            static fn (string $role): ?string => $roleNames[$role] ?? null,
+                            $clause,
+                        ),
+                        $requirements,
+                    );
                 }
 
                 $abilities[] = $presentedAbility;

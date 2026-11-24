@@ -74,6 +74,8 @@ public function refund(): void;
 
 In this example, the user needs `invoices::refund` and either role to refund an invoice. The operator needs both roles to see or edit the refund assignment. Saving other changes preserves its hidden value or default.
 
+With Permit `1.0.0-beta.5` and Front Awesome `1.0.0-beta.11` or later, the editor shows the `WithRole` requirements for each visible permission. It still lets an authorized operator assign the permission before the selected user has the required roles.
+
 With one string argument, `WithRole` defaults to `RoleMatch::And` and `ManageableByRoleUser` defaults to `RoleMatch::Or`. Supply exact role method names separated by commas. Permit trims spaces and ignores duplicates. Empty entries and undeclared roles fail catalog validation. Apply either attribute to the group to cover generated CRUD keys and custom permissions. The user must satisfy both the group and method declarations, each in its own mode.
 
 If only administrators should grant the role itself, add `#[ManageableByRoleUser('admin')]` to the `admin()` role declaration. Seed the first administrator with `Permit::add($operator, 'role::admin')` in trusted application code. Follow the [declaration example](https://atb.dev.br/docs/permit/declarations#require-a-role) and the [editor walkthrough](https://atb.dev.br/docs/permit/management#restrict-assignment-edits).

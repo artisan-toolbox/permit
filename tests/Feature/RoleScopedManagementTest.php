@@ -12,6 +12,34 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 final class RoleScopedManagementTest extends RoleRulesTestCase
 {
+    public function test_editor_describes_use_requirements_without_exposing_hidden_roles_or_changing_assignments(): void
+    {
+        $actor = $this->user();
+        $subject = $this->user('Noor');
+        Permit::add($actor, [Catalog::READ, Catalog::UPDATE]);
+
+        $endpoint = $this->endpoint($subject);
+        $snapshot = $this->actingAs($actor)->getJson($endpoint)->assertOk()
+            ->assertJsonMissing(['name' => 'Administrator'])
+            ->assertJsonMissing(['key' => 'reports::export']);
+        $reports = array_find($snapshot->json('sections'), static fn (array $section): bool => $section['id'] === 'reports');
+        $read = array_find($reports['abilities'], static fn (array $ability): bool => $ability['key'] === 'reports::read');
+        self::assertSame([[null]], $read['roleRequirements']);
+
+        $this->putJson($endpoint, [
+            'revision' => $snapshot->json('revision'),
+            'values' => [...$snapshot->json('values'), 'reports::read' => true],
+        ])->assertNoContent();
+
+        Permit::add($actor, ['role::admin', 'role::reviewer']);
+        $snapshot = $this->getJson($endpoint)->assertOk()->assertJsonPath('values.reports::read', true);
+        $releases = array_find($snapshot->json('sections'), static fn (array $section): bool => $section['id'] === 'releases');
+        $publish = array_find($releases['abilities'], static fn (array $ability): bool => $ability['key'] === 'releases::publish');
+        self::assertSame([['Administrator', 'Developer'], ['Auditor'], ['Reviewer']], $publish['roleRequirements']);
+        $roles = array_find($snapshot->json('sections'), static fn (array $section): bool => $section['kind'] === 'roles');
+        self::assertArrayNotHasKey('roleRequirements', $roles['abilities'][0]);
+    }
+
     /** @return array<string, array{bool}> */
     public static function hiddenInputs(): array
     {
