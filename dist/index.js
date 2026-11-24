@@ -1,6 +1,6 @@
 import { defineComponent as e, inject as t } from "vue";
 // package.json
-var n = "1.0.0-beta.4", r = [
+var n = "1.0.0-beta.5", r = [
 	"allows",
 	"allow",
 	"check",

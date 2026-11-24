@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## [1.0.0-beta.5] - 2026-11-23
 
-- Include `WithRole` requirements in the permission editor's GET catalog. Use the operator's visible role names and keep hidden role names private. Operators can still assign visible permissions before the selected user meets their requirements.
+- Include `WithRole` requirements in the editor's GET catalog for visible permissions. Include translated names for roles the operator can view. Use `null` for hidden names.
+- Front Awesome `1.0.0-beta.11` or later displays the requirements as a badge. Authorized operators can still assign the permission before the selected user meets the requirements.
 
 ## [1.0.0-beta.4] - 2026-11-23
 
